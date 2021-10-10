@@ -88,15 +88,50 @@ app.post('/gates',async (req,res) =>{
             //was going to use google functions to automatically trigger generation of parking slots but it required payment already
             const parkingSlots = parking.populate(lot,req.body);
             
-            const batch = db.batch();
+            const BATCH_SIZE = 500;
+            let batch = db.batch();
+            let j = 0;
             parkingSlots.forEach(p => {
                 var ref = db.collection('ParkingSlots').doc(`${p.x},${p.y}`);
                 batch.set(ref, p);
+                if (j === BATCH_SIZE) {
+                    batch.commit();
+                    batch = db.batch();
+                    j = 0; // Reset
+                  } else j++;
+                
             })
             batch.commit();
-
             return(res.status(200).send('gates initialized. parking lot map generated.'))
         }
         return(res.status(400).send('Invalid gate x,y coordinates. Gates must be at perimeter edge of the parking lot'))
     });
 })
+
+app.post('/park',async (req,res) =>{
+    const parkingLot = db.collection('ParkingLot').doc('ParkingLot');
+    const parkingLotDoc = await parkingLot.get();
+    if(parkingLotDoc){
+        const parkingLotData = parkigLotDoc.data();
+        const schema =Joi.object({
+            plateno:Joi.string().required(),
+            size:Joi.number().integer().positive().required().max(2),
+            gate: Joi.number().integer().positive().required().max(parkingLotData.gateCount-1)
+        });
+        const result = schema.validate(req.body);
+        if(!result.error){
+            const gate = db.collection('Gate').doc(req.body.gate);
+            console.log(gate);
+            //pull parkingslot top 1 where size=<parkingslot size order by distance to gate x y
+            const vehicle = {
+                plateno: req.body.plateno,
+                size: req.body.size,
+                gate: req.body.gate,
+                datetimein: new Date()
+                //datetimeout
+                //parkingslotXY
+            }
+        }
+    }
+    
+});

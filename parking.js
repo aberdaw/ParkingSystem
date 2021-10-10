@@ -18,6 +18,7 @@ function populate(lot,gates){
                 }
                 gates.forEach(function (item) {
                    let distance = {
+                       id:gates.indexOf(item),
                        x:item.x,
                        y:item.y,
                        distance:compute.getDistance(x-item.x,y-item.y)
