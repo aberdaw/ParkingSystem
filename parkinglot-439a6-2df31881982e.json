@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "parkinglot-439a6",
+  "private_key_id": "2df31881982e97d2f583c6fe5476d074e70878db",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDTpcBO+FPonzmi\nXOnLCUxlD+u4VunDL1+jIuIvi92fplcciNnbo6Aw509j/DI/DaxP4c8kn8vkcgIo\nthP+dUc9uyeZCJ1vzM9/FkIghKrgdO8ku9VZUcRKSvjGaLSOXHhpIs3YWkmf7YK7\nD3iLUM+gg7h18rwOu5/HMr0ULQYVTHBuvro67/apBDUah+qAMMBkwBLT/yRKw24u\n3QA/UtVxvTcumL0IsP0FgpuOoUxCsAzZ/GP6uV1oDZtBWpWXk7fAaJ5zdIV5Mc4l\nFcy0m89y8zlGlBLOx3SmZ+pceyAYHfYgXfV1TsW5rwv3+5oeW1bj5D7CPPWgQlwg\nEc4/78hXAgMBAAECggEADBYOjdPrgsC4+1cf+Lq+tJS8qsm3zrAhX4EJ9pofnVLT\n7aq4+ix1ZOWIqJaJzgT7XpJwEFDZxWFnUyjWqnTLDTDnWXte9jf1b3X3b8Dzux6i\nW3AohlG/iliOrVHkYa7RJ3vX0m+RfcMD8Ke5BAeo26s5+O5UI+k9/hOdLY5Gpyec\nPDw6Lpup+Ly5w/aQ7JvERd6Ova6QMQQ77rc4vLbBFF40WsaCjJ5M+RQ4s34pIOsY\niKaiQVPk7/dRcfGLSQBOBAml6Xz0fI989o0IKpbLEkv4WsEYQ1WHZ+JqAbj+FU97\nIqP1b3oeOFBu20rLyl0cNTUUcYgt0KB7kNw9z8qz5QKBgQDphVVlDv296CwgbIFI\nYGqqUfFoMciX2BXvnmaDbWCG6Y+IB8V9lluvqpoharxoyUiXeSyCGdxXRHbVUE9z\n+IfOOehnz7TXB4PV4CYMJiyVx9KeQX4vZiyhia3U3pUukauoqqEMh7dUJv9EeTpx\nysnW5MsYfhxX2viwm1tvg1dmSwKBgQDoBWQbAXpoVa0xDeene1pb3rIIOjgP6fp8\nabxmLtbJ2uSdMnaJ9qLDSnpc0I3NeiQnG5OFz1eEN1cPuyRsyykejIJWXpoYbyZ+\nv3KPF6eUKPymMEBmXzaqYkV2pkpff0s/do1mAhvkvCDw7qb0DiVH4kfb1eMHiSQI\n7yCOAFBOpQKBgQCpu4s1OC9AoIeqTZOumr4M7CCOfljx3VMcZsLWVmLpzMvRsOxf\n+zDLPzJmhaFKfLsxthaevdNE7vN82rHVdlinkbmV8wfbn4+4ngKpo/mWKLay5qGk\nLBzWkS7zYZGHVsQxhUwnwmGDXhD+oSrU2PPaKVRhihBp3zQRkepk5E9bfwKBgQDM\ng0v8ve3On458ibwilYlNJ1uYAvE9nckr9uuYyjqLTIVsxnlUHHDVYQXAYBhOARZy\n3kzHir6ijUERXay6tMz233VXeiWr2fV9jXUGChytbP9d4XQyiESgJOUDs4ok6QhD\n1VTHkJ5TnTwQAtxojTtxRFSAwuRN1SVNNrJkWIRw/QKBgE0JrDvn0HT8YhUKThlW\nRwrbIRsPyqJM+DMK4RTcqHt0baZ5+N+eUuqKRkrLjMMONHWLpGv/lr7Cf7taG3qV\nqTyobCUSNZz01Nr0FQzDwuc7dX5KZbRFTRZxs7exLEjezC3EsYI/A7yJKHUWSrbZ\nhl8DqKM720qUseqNs4kXKX6B\n-----END PRIVATE KEY-----\n",
+  "client_email": "parklot@parkinglot-439a6.iam.gserviceaccount.com",
+  "client_id": "115513205253956190297",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/parklot%40parkinglot-439a6.iam.gserviceaccount.com"
+}
