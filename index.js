@@ -5,7 +5,7 @@ const projectId = 'parkinglot-439a6'
 const keyFilename = 'C:\\Users\\amado\\Documents\\GitHub\\ParkingSystem\\parkinglot-439a6-2df31881982e.json'
 const db= new Firestore({projectId, keyFilename});
 const validator = require('./validator.js');  
-
+const parking = require('./parking.js')
 
 const app = express();
 app.use(express.json());
@@ -76,7 +76,7 @@ app.post('/gates',async (req,res) =>{
         const result= schema.validate(req.body);
         if(result.error)
             return(res.status(400).send(result.error.details[0].message));
-        //validate values, gates must be at perimiter edge of the parking lot
+        //validate values, gates must be at perimeter edge of the parking lot
         if(validator.validateGates(req.body,lot)){
             const reqdata = req.body;
             reqdata.forEach(function (item) {
@@ -85,11 +85,18 @@ app.post('/gates',async (req,res) =>{
                     y: item.y,
                   });
             });
-            //trigger autogenerate parking slots
+            //was going to use google functions to automatically trigger generation of parking slots but it required payment already
+            const parkingSlots = parking.populate(lot,req.body);
+            
+            const batch = db.batch();
+            parkingSlots.forEach(p => {
+                var ref = db.collection('ParkingSlots').doc(`${p.x},${p.y}`);
+                batch.set(ref, p);
+            })
+            batch.commit();
+
             return(res.status(200).send('gates initialized. parking lot map generated.'))
         }
-        return(res.status(400).send('Invalid gate x,y coordinates. Gates must be at perimiter edge of the parking lot'))
+        return(res.status(400).send('Invalid gate x,y coordinates. Gates must be at perimeter edge of the parking lot'))
     });
-    return;
-
 })
