@@ -5,7 +5,8 @@ const projectId = 'parkinglot-439a6'
 const keyFilename = 'C:\\Users\\amado\\Documents\\GitHub\\ParkingSystem\\parkinglot-439a6-2df31881982e.json'
 const db= new Firestore({projectId, keyFilename});
 const validator = require('./validator.js');  
-const parking = require('./parking.js')
+const parking = require('./parking.js');
+const { array } = require('joi');
 
 const app = express();
 app.use(express.json());
@@ -109,29 +110,81 @@ app.post('/gates',async (req,res) =>{
 })
 
 app.post('/park',async (req,res) =>{
-    const parkingLot = db.collection('ParkingLot').doc('ParkingLot');
-    const parkingLotDoc = await parkingLot.get();
-    if(parkingLotDoc){
-        const parkingLotData = parkigLotDoc.data();
-        const schema =Joi.object({
-            plateno:Joi.string().required(),
-            size:Joi.number().integer().positive().required().max(2),
-            gate: Joi.number().integer().positive().required().max(parkingLotData.gateCount-1)
+    try {
+        const parkingLot = db.collection('ParkingLot').doc('ParkingLot');
+        parkingLot.get().then(doc => {
+            const data  = doc.data();
+            const lot = {
+                sizeX : data.sizeX,
+                sizeY : data.sizeY,
+                gateCount : data.gateCount
+            }//pulled for joi validation on gate count
+            const schema =Joi.object({
+                plateno:Joi.string().required(),
+                size:Joi.number().integer().required().max(2),
+                gate: Joi.number().integer().required().max(lot.gateCount-1)
+            });
+            const result = schema.validate(req.body);
+            if(!result.error){
+                //check for already parked plateno
+                let vehicle=null;
+                const vehicles = db.collection('Vehicles').doc(req.body.plateno);
+                vehicles.get().then(doc => {
+                    if(doc)
+                        vehicle = doc.data();
+                });
+                if(vehicle !== null) 
+                    if(!vehicle.hasOwnProperty('datetimeout'))
+                        throw new Error('Vehicle already checked in.');
+                //workaround for firestore query limitation on where and order by
+                let sizes = new Array;
+                let h=req.body.size;
+                while(sizes.length!=3-(req.body.size))
+                {
+                    sizes.push(h);h++;
+                }
+
+                const snapshot = db.collection("ParkingSlots").where('occupied','==',0).where('size','in',sizes).orderBy(''+req.body.gate).limit(1)
+                snapshot.get().then(doc =>{
+                    if(doc){
+                        doc.forEach(doc1 => {
+                            let parkingSlot = doc1.data();
+                            parkingSlot.occupied=1;//set lot to occupied
+                            const parkSlotId=parkingSlot.x+','+parkingSlot.y;
+                            const vehicle = {
+                                size: req.body.size,
+                                gate: req.body.gate,
+                                datetimein: new Date(),
+                                parkingslotXY:parkSlotId
+                            }
+                            const vehicles = db.collection('Vehicles').doc(req.body.plateno);
+                            vehicles.set(vehicle);
+                            const parkingSlots = db.collection('ParkingSlots').doc(parkSlotId);
+                            parkingSlots.set(parkingSlot);
+                            return(res.status(200).send('Vehicle parked.'));
+                        });    
+                    }else{throw new Error("No more parking slots available for this vehicle.")}
+                });
+            }else
+                throw new Error(result.error.details[0].message);
         });
-        const result = schema.validate(req.body);
-        if(!result.error){
-            const gate = db.collection('Gate').doc(req.body.gate);
-            console.log(gate);
-            //pull parkingslot top 1 where size=<parkingslot size order by distance to gate x y
-            const vehicle = {
-                plateno: req.body.plateno,
-                size: req.body.size,
-                gate: req.body.gate,
-                datetimein: new Date()
-                //datetimeout
-                //parkingslotXY
-            }
-        }
+    }catch(error) {
+        return(res.status(400).send(error.message));
     }
-    
+});
+
+app.post('/checkout',async (req,res) =>{
+    const schema =Joi.object({
+        plateno:Joi.string().required(),
+    });
+    const result = schema.validate(req.body);
+    if(!result.error){
+        const vehicles = db.collection('Vehicles').doc(req.body.plateno);
+        const doc = await vehicles.get();
+        if(doc){
+            console.log(doc.data());
+        }
+        return(res.status(400).send('Vehicle not found.'));
+    }
+    return(res.status(400).send(result.error.details[0].message));
 });

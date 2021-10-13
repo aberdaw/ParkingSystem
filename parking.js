@@ -14,16 +14,9 @@ function populate(lot,gates){
                     y:y,
                     size:compute.randomizeSize(),
                     occupied:0,
-                    gateDistance: new Array()
                 }
                 gates.forEach(function (item) {
-                   let distance = {
-                       id:gates.indexOf(item),
-                       x:item.x,
-                       y:item.y,
-                       distance:compute.getDistance(x-item.x,y-item.y)
-                   }
-                   parkingSlot.gateDistance.push(distance);
+                   parkingSlot[gates.indexOf(item)]=compute.getDistance(x-item.x,y-item.y)
                 });
                 parkingSlots.push(parkingSlot);
             }
