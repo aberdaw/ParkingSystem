@@ -58,6 +58,7 @@ app.post('/init', async (req,res) =>{
     }
     return(res.status(400).send(result.error.details[0].message));
 });
+
 //initialize parking gates
 app.post('/gates',async (req,res) =>{
     const parkingLot = db.collection('ParkingLot').doc('ParkingLot');
@@ -125,46 +126,47 @@ app.post('/park',async (req,res) =>{
                 gate: Joi.number().integer().required().max(lot.gateCount-1)
             });
             const result = schema.validate(req.body);
+            let isParked = false;
             if(!result.error){
                 //check for already parked plateno
-                let vehicle=null;
                 const vehicles = db.collection('Vehicles').doc(req.body.plateno);
-                vehicles.get().then(doc => {
-                    if(doc)
-                        vehicle = doc.data();
-                });
-                if(vehicle !== null) 
+                vehicles.get().then(vehicleDoc => {
+                    const vehicle = vehicleDoc.data();
+                    console.log(vehicle);
                     if(!vehicle.hasOwnProperty('datetimeout'))
                         throw new Error('Vehicle already checked in.');
-                //workaround for firestore query limitation on where and order by
-                let sizes = new Array;
-                let h=req.body.size;
-                while(sizes.length!=3-(req.body.size))
-                {
-                    sizes.push(h);h++;
-                }
+                    else{
+                        //workaround for firestore query limitation on where and order by
+                        let sizes = new Array;
+                        let h=req.body.size;
+                        while(sizes.length!=3-(req.body.size))
+                        {
+                            sizes.push(h);h++;
+                        }
 
-                const snapshot = db.collection("ParkingSlots").where('occupied','==',0).where('size','in',sizes).orderBy(''+req.body.gate).limit(1)
-                snapshot.get().then(doc =>{
-                    if(doc){
-                        doc.forEach(doc1 => {
-                            let parkingSlot = doc1.data();
-                            parkingSlot.occupied=1;//set lot to occupied
-                            const parkSlotId=parkingSlot.x+','+parkingSlot.y;
-                            const vehicle = {
-                                size: req.body.size,
-                                gate: req.body.gate,
-                                datetimein: new Date(),
-                                parkingslotXY:parkSlotId
-                            }
-                            const vehicles = db.collection('Vehicles').doc(req.body.plateno);
-                            vehicles.set(vehicle);
-                            const parkingSlots = db.collection('ParkingSlots').doc(parkSlotId);
-                            parkingSlots.set(parkingSlot);
-                            return(res.status(200).send('Vehicle parked.'));
-                        });    
-                    }else{throw new Error("No more parking slots available for this vehicle.")}
-                });
+                        const snapshot = db.collection("ParkingSlots").where('occupied','==',0).where('size','in',sizes).orderBy(''+req.body.gate).limit(1)
+                        snapshot.get().then(doc =>{
+                            if(doc){
+                                doc.forEach(doc1 => {
+                                    let parkingSlot = doc1.data();
+                                    parkingSlot.occupied=1;//set lot to occupied
+                                    const parkSlotId=parkingSlot.x+','+parkingSlot.y;
+                                    const vehicle = {
+                                        size: req.body.size,
+                                        gate: req.body.gate,
+                                        datetimein: new Date(),
+                                        parkingslotXY:parkSlotId
+                                    }
+                                    const vehicles = db.collection('Vehicles').doc(req.body.plateno);
+                                    vehicles.set(vehicle);
+                                    const parkingSlots = db.collection('ParkingSlots').doc(parkSlotId);
+                                    parkingSlots.set(parkingSlot);
+                                    return(res.status(200).send('Vehicle parked.'));
+                                });    
+                            }else{throw new Error("No more parking slots available for this vehicle.")}
+                        });
+                    }
+                }).catch(e=>{return(res.status(400).send(e.message));});
             }else
                 throw new Error(result.error.details[0].message);
         });
