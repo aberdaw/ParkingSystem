@@ -29,12 +29,22 @@ function park(){
    
 }
 
-function checkout(){
-   
+function getParkingFee(vehicle, parkedHours, isWithinDay=false, accumulator=0){
+    console.log(parkedHours)
+    console.log(isWithinDay);
+    console.log(accumulator);
+    if(parkedHours<24){
+        if(isWithinDay)
+        return ((20+(vehicle.parkingslotsize*40))*(parkedHours-3)+40).toFixed(2);
+        else
+        return (accumulator+ (20+(vehicle.parkingslotsize*40))*(parkedHours)).toFixed(2);
+    }
+    else
+        return  getParkingFee(vehicle, parkedHours-24, isWithinDay, 5000 + accumulator)
 }
 
 module.exports={
     populate:populate,
     park:park,
-    checkout:checkout
+    getParkingFee:getParkingFee
 };

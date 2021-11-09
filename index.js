@@ -132,40 +132,43 @@ app.post('/park',async (req,res) =>{
                 const vehicles = db.collection('Vehicles').doc(req.body.plateno);
                 vehicles.get().then(vehicleDoc => {
                     const vehicle = vehicleDoc.data();
-                    console.log(vehicle);
-                    if(!vehicle.hasOwnProperty('datetimeout'))
-                        throw new Error('Vehicle already checked in.');
-                    else{
-                        //workaround for firestore query limitation on where and order by
-                        let sizes = new Array;
-                        let h=req.body.size;
-                        while(sizes.length!=3-(req.body.size))
-                        {
-                            sizes.push(h);h++;
-                        }
-
-                        const snapshot = db.collection("ParkingSlots").where('occupied','==',0).where('size','in',sizes).orderBy(''+req.body.gate).limit(1)
-                        snapshot.get().then(doc =>{
-                            if(doc){
-                                doc.forEach(doc1 => {
-                                    let parkingSlot = doc1.data();
-                                    parkingSlot.occupied=1;//set lot to occupied
-                                    const parkSlotId=parkingSlot.x+','+parkingSlot.y;
-                                    const vehicle = {
-                                        size: req.body.size,
-                                        gate: req.body.gate,
-                                        datetimein: new Date(),
-                                        parkingslotXY:parkSlotId
-                                    }
-                                    const vehicles = db.collection('Vehicles').doc(req.body.plateno);
-                                    vehicles.set(vehicle);
-                                    const parkingSlots = db.collection('ParkingSlots').doc(parkSlotId);
-                                    parkingSlots.set(parkingSlot);
-                                    return(res.status(200).send('Vehicle parked.'));
-                                });    
-                            }else{throw new Error("No more parking slots available for this vehicle.")}
-                        });
+                    let timeIn =new Date();
+                    if(vehicle){
+                        if(!vehicle.hasOwnProperty('datetimeout'))
+                            throw new Error('Vehicle already checked in.');
+                        let diffInMillis = (timeIn.getTime()) - (vehicle.datetimeout.seconds*1000);
+                        if(diffInMillis < 60 * 60 * 1000)
+                            timeIn = vehicle.datetimeout;
                     }
+                    let sizes = new Array;
+                    let h=req.body.size;
+                    while(sizes.length!=3-(req.body.size))
+                    {
+                        sizes.push(h);h++;
+                    }
+                    const snapshot = db.collection("ParkingSlots").where('occupied','==',0).where('size','in',sizes).orderBy(''+req.body.gate).limit(1)
+                    snapshot.get().then(doc =>{
+                        if(doc.size>0){
+                            doc.forEach(doc1 => {
+                                let parkingSlot = doc1.data();
+                                parkingSlot.occupied=1;//set lot to occupied
+                                const parkSlotId=parkingSlot.x+','+parkingSlot.y;
+                                const vehicle = {
+                                    size: req.body.size,
+                                    gate: req.body.gate,
+                                    datetimein: timeIn,
+                                    parkingslotXY:parkSlotId,
+                                    parkingslotsize:parkingSlot.size
+                                }
+                                const vehicles = db.collection('Vehicles').doc(req.body.plateno);
+                                vehicles.set(vehicle);
+                                const parkingSlots = db.collection('ParkingSlots').doc(parkSlotId);
+                                parkingSlots.set(parkingSlot);
+                                return(res.status(200).send('Vehicle parked.'));
+                            });    
+                        }else{throw new Error("No more parking slots available for this vehicle.")}
+                    }).catch(e=>{return(res.status(400).send(e.message));});
+                    
                 }).catch(e=>{return(res.status(400).send(e.message));});
             }else
                 throw new Error(result.error.details[0].message);
@@ -179,14 +182,32 @@ app.post('/checkout',async (req,res) =>{
     const schema =Joi.object({
         plateno:Joi.string().required(),
     });
-    const result = schema.validate(req.body);
-    if(!result.error){
-        const vehicles = db.collection('Vehicles').doc(req.body.plateno);
-        const doc = await vehicles.get();
-        if(doc){
-            console.log(doc.data());
+    try{
+        const result = schema.validate(req.body);
+        if(!result.error){
+            const vehicles = db.collection('Vehicles').doc(req.body.plateno);
+            const doc = await vehicles.get();
+            if(doc){
+                let parkingFee=40;
+                let checkOutTime = new Date();
+                const vehicle = {size, gate, datetimein,datetimeout,parkingslotXY,parkingslotsize}=doc.data();
+                console.log(vehicle);
+                if(vehicle.hasOwnProperty('datetimeout'))
+                    throw new Error('Vehicle not parked.');
+                
+                let parkedHours = Math.ceil((checkOutTime-(vehicle.datetimein.seconds*1000))/3600000);
+                let isWithinDay = parkedHours<=24;
+                if(parkedHours > 3){
+                    parkingFee = parking.getParkingFee(vehicle, parkedHours,isWithinDay);
+                }
+                vehicle['datetimeout']=checkOutTime;
+                vehicles.set(vehicle);
+                return(res.status(200).send(`Vehicle checked out successfully. Fee = ${parkingFee}`));
+            }
+            throw new Error('Vehicle not found.');
         }
-        return(res.status(400).send('Vehicle not found.'));
+        throw new Error(result.error.details[0].message);
+    }catch(e){
+        return(res.status(400).send(e.message));
     }
-    return(res.status(400).send(result.error.details[0].message));
 });

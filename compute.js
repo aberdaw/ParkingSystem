@@ -11,3 +11,7 @@ module.exports={
     randomizeSize:randomizeSize,
     getDistance:getDistance
 };
+
+function getParkingFee(vehicle, parkedHours){
+    return (20+(vehicle.parkingslotsize*40))*parkedHours;
+}
