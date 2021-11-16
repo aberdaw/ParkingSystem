@@ -14,7 +14,24 @@ const port =process.env.PORT || 2000
 
 app.listen(port,() =>{
     console.log(`Listening to port ${port}`);
-    
+});
+const observer = db.collection('Vehicles')
+.onSnapshot(querySnapshot => {
+  querySnapshot.docChanges().forEach(change => {
+    if (change.type === 'modified') {
+        const modifiedData = change.doc.data();
+        if(modifiedData.hasOwnProperty('datetimeout')){
+            let parkingSlots =db.collection('ParkingSlots').doc(modifiedData.parkingslotXY);
+            parkingSlots.get().then(doc => {
+                const parkingSlot  = doc.data();
+                if (parkingSlot.exists) {
+                    parkingSlot.occupied=0;
+                    parkingSlots.set(parkingSlot);
+                }
+            });
+        }
+    }
+  });
 });
 
 //parking system status - later add number of remaining slots,other details
@@ -172,7 +189,7 @@ app.post('/park',async (req,res) =>{
                 }).catch(e=>{return(res.status(400).send(e.message));});
             }else
                 throw new Error(result.error.details[0].message);
-        });
+        }).catch(e=>{return(res.status(400).send(e.message));});
     }catch(error) {
         return(res.status(400).send(error.message));
     }
@@ -191,7 +208,6 @@ app.post('/checkout',async (req,res) =>{
                 let parkingFee=40;
                 let checkOutTime = new Date();
                 const vehicle = {size, gate, datetimein,datetimeout,parkingslotXY,parkingslotsize}=doc.data();
-                console.log(vehicle);
                 if(vehicle.hasOwnProperty('datetimeout'))
                     throw new Error('Vehicle not parked.');
                 
