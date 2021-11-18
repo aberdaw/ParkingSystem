@@ -105,7 +105,7 @@ app.post('/gates',async (req,res) =>{
                   });
             });
             //was going to use google functions to automatically trigger generation of parking slots but it required payment already
-            const parkingSlots = parking.populate(lot,req.body);
+            const parkingSlots = parking.populateRandomSize(lot,req.body);
             
             const BATCH_SIZE = 500;
             let batch = db.batch();
@@ -118,14 +118,59 @@ app.post('/gates',async (req,res) =>{
                     batch = db.batch();
                     j = 0; // Reset
                   } else j++;
-                
-            })
+            });
             batch.commit();
-            return(res.status(200).send('gates initialized. parking lot map generated.'))
+            return(res.status(200).send('gates initialized. parking lot map generated.'))   
         }
         return(res.status(400).send('Invalid gate x,y coordinates. Gates must be at perimeter edge of the parking lot'))
     });
-})
+});
+
+//override parking slot values
+app.post('/override',async (req,res) =>{
+    const parkingLot = db.collection('ParkingLot').doc('ParkingLot');
+    const doc = await parkingLot.get();
+    const data  = doc.data();
+    const lot = {
+        sizeX : data.sizeX,
+        sizeY : data.sizeY,
+        gateCount : data.gateCount
+    }
+    let parkingSlots = [];
+    //validate values
+    if(validator.validateParkingSlots(req.body,lot)){
+        const reqdata = req.body;
+        reqdata.forEach(function (item) {
+            xyArray = item.xy.split(',');
+            let slotData = {
+                occupied:0,
+                size:item.size,
+                x:parseInt(xyArray[0]),
+                y:parseInt(xyArray[1])
+            };
+            item.distances.forEach(function(distance){
+                slotData[Object.keys(distance)[0]]=Object.values(distance)[0];
+            });
+            console.log(slotData);
+            parkingSlots.push(slotData);
+           });
+        const BATCH_SIZE = 500;
+        let batch = db.batch();
+        let j = 0;
+        parkingSlots.forEach(p => {
+            var ref = db.collection('ParkingSlots').doc(`${p.x},${p.y}`);
+            batch.set(ref, p);
+            if (j === BATCH_SIZE) {
+                batch.commit();
+                batch = db.batch();
+                j = 0; // Reset
+              } else j++;
+        });
+        batch.commit();
+        return(res.status(200).send('parking slots set.'));
+    }
+    return(res.status(400).send('Invalid input. Please check that the number of parking slots for override does not exceed existing slots. And number of distances per slot must not exceed number of gates'));
+});
 
 app.post('/park',async (req,res) =>{
     try {

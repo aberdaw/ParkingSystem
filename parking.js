@@ -1,6 +1,6 @@
 const compute = require('./compute');
 
-function populate(lot,gates){
+function populateRandomSize(lot,gates){
    let parkingSlots = new Array();
     for(x=1;x<=lot.sizeX;x++){
         for(y=1;y<=lot.sizeY;y++){
@@ -44,7 +44,7 @@ function getParkingFee(vehicle, parkedHours, isWithinDay=false, accumulator=0){
 }
 
 module.exports={
-    populate:populate,
+    populateRandomSize:populateRandomSize,
     park:park,
     getParkingFee:getParkingFee
 };

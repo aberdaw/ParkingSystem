@@ -20,7 +20,21 @@ function validateGates(gates, lot){
     return !err;
 }
 
+function validateParkingSlots(slots, lot){
+    let err = true;
+    if(slots.length<=(lot.sizeX*lot.sizeY)-lot.gateCount){
+        slots.forEach(function (item) {
+            if(item.size<3 && item.size>=0 && item.distances.length<=lot.gateCount)
+            {
+                err=false;
+            }
+        });
+    }
+    return !err;
+}
+
 module.exports={
     validateInit:validateInit,
-    validateGates:validateGates
+    validateGates:validateGates,
+    validateParkingSlots:validateParkingSlots
 };
