@@ -15,16 +15,17 @@ const port =process.env.PORT || 2000
 app.listen(port,() =>{
     console.log(`Listening to port ${port}`);
 });
-const observer = db.collection('Vehicles')
+const observer = db.collection('Vehicles') // listener for checkout, to automatically release parking slot
 .onSnapshot(querySnapshot => {
   querySnapshot.docChanges().forEach(change => {
     if (change.type === 'modified') {
         const modifiedData = change.doc.data();
+        console.log(modifiedData);     
         if(modifiedData.hasOwnProperty('datetimeout')){
             let parkingSlots =db.collection('ParkingSlots').doc(modifiedData.parkingslotXY);
             parkingSlots.get().then(doc => {
                 const parkingSlot  = doc.data();
-                if (parkingSlot.exists) {
+                if (parkingSlot) {
                     parkingSlot.occupied=0;
                     parkingSlots.set(parkingSlot);
                 }
@@ -106,7 +107,6 @@ app.post('/gates',async (req,res) =>{
             });
             //was going to use google functions to automatically trigger generation of parking slots but it required payment already
             const parkingSlots = parking.populateRandomSize(lot,req.body);
-            
             const BATCH_SIZE = 500;
             let batch = db.batch();
             let j = 0;
@@ -272,3 +272,19 @@ app.post('/checkout',async (req,res) =>{
         return(res.status(400).send(e.message));
     }
 });
+//initiate parking lot map details
+app.delete('/purge', async (req,res) =>{
+    purgeCollection('ParkingLot');
+    purgeCollection('ParkingSlots');
+    purgeCollection('Gates');
+    purgeCollection('Vehicles');
+    return(res.status(200).send('Purged Firestore Collections'));
+});
+
+function purgeCollection(collectionName){
+    db.collection(collectionName).get().then(querySnapshot => {
+        querySnapshot.docs.forEach(snapshot => {
+            snapshot.ref.delete();
+        })
+    })
+}

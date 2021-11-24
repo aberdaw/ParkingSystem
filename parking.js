@@ -22,11 +22,8 @@ function populateRandomSize(lot,gates){
             }
         }
    }
+   console.log(parkingSlots);
   return parkingSlots;
-}
-
-function park(){
-   
 }
 
 function getParkingFee(vehicle, parkedHours, isWithinDay=false, accumulator=0){
@@ -45,6 +42,5 @@ function getParkingFee(vehicle, parkedHours, isWithinDay=false, accumulator=0){
 
 module.exports={
     populateRandomSize:populateRandomSize,
-    park:park,
     getParkingFee:getParkingFee
 };
